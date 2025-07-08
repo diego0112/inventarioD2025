@@ -30,10 +30,9 @@ $curl = curl_init(); //inicia la sesión cURL
     } else {
         $respuesta = json_decode($response);
         //print_r($respuesta);
-        
-        ?>
-<!--
-        <!DOCTYPE html>
+        $contenido_pdf = '';
+        $contenido_pdf .= '
+            <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -91,9 +90,9 @@ $curl = curl_init(); //inicia la sesión cURL
   <div class="info">
     ENTIDAD: <span class="label"></span> DIRECCION REGIONAL DE EDUCACION - AYACUCHO <br>
     AREA: <span class="label"></span> OFICINA DE ADMINISTRACIÓN <br>
-    ORIGEN: <span class="label"></span><?php echo $respuesta->amb_origen->codigo.'-'.$respuesta->amb_origen->detalle;?><br>
-    DESTINO: <span class="label"></span><?php echo $respuesta->amb_destino->codigo.'-'.$respuesta->amb_destino->detalle;?><br><br>
-    <strong>MOTIVO (*): </strong><span class="label"><?php echo $respuesta->movimiento->descripcion;?></span>
+    ORIGEN: <span class="label"></span>'. $respuesta->amb_origen->codigo.'-'.$respuesta->amb_origen->detalle.'<br>
+    DESTINO: <span class="label"></span>'.$respuesta->amb_destino->codigo.'-'.$respuesta->amb_destino->detalle.'<br><br>
+    <strong>MOTIVO (*): </strong><span class="label">'.$respuesta->movimiento->descripcion.'</span>
   </div>
 
   <table>
@@ -110,26 +109,10 @@ $curl = curl_init(); //inicia la sesión cURL
       </tr>
     </thead>
     <tbody>
-    <?php 
-    $contador = 1;
-    foreach ($respuesta->detalle as $bien) {
-        echo "<tr>";
-        echo "<td>".$contador . "</td>";
-        echo "<td>".$bien->cod_patrimonial . "</td>";
-        echo "<td>".$bien->denominacion . "</td>";
-        echo "<td>".$bien->marca . "</td>";
-        echo "<td>".$bien->color . "</td>";
-            echo "<td>".$bien->modelo . "</td>";
-            echo "<td>".$bien->estado_conservacion . "</td>";
-        echo "</tr>";
-                $contador++;
-    }
-    ?>
+        ';
+        ?>
 
-    </tbody>
-  </table>
-
-    <?php
+<?php
     
     // Definir meses en español manualmente
     $meses = [
@@ -146,9 +129,27 @@ $curl = curl_init(); //inicia la sesión cURL
     $mes = $meses[(int)$fecha->format('m')];
     $anio = $fecha->format('Y');
     ?>
+        
+    <?php 
+    $contador = 1;
+    foreach ($respuesta->detalle as $bien) {
+        $contenido_pdf.= "<tr>";
+        $contenido_pdf.= "<td>".$contador . "</td>";
+        $contenido_pdf.= "<td>".$bien->cod_patrimonial . "</td>";
+        $contenido_pdf.= "<td>".$bien->denominacion . "</td>";
+        $contenido_pdf.= "<td>".$bien->marca . "</td>";
+        $contenido_pdf.= "<td>".$bien->color . "</td>";
+            $contenido_pdf.= "<td>".$bien->modelo . "</td>";
+            $contenido_pdf.= "<td>".$bien->estado_conservacion . "</td>";
+        $contenido_pdf.= "</tr>";
+                $contador++;
+    }
+    $contenido_pdf.='
+    </tbody>
+  </table>
 
   <div class="lugar-fecha">
-    Ayacucho, <?php echo "$dia de $mes del $anio"; ?>
+    Ayacucho, '."$dia de $mes del $anio".'
   </div>
 
   <div class="firma">
@@ -164,7 +165,13 @@ $curl = curl_init(); //inicia la sesión cURL
 
 </body>
 </html>
--->
+';
+    ?>
+
+    
+
+    
+
 
         <?php
         require_once('./vendor/tecnickcom/tcpdf/tcpdf.php');
@@ -172,7 +179,7 @@ $curl = curl_init(); //inicia la sesión cURL
         $pdf = new TCPDF(); //SI DESEAS CAMBIAR ALGO DEBES DE CAMABIAR O INSERTAR EL DATO DESDE EL PRIMERO HASTA EL QUE  DESEAS CAMBIAR
 
         // set document information
-$pdf->SetCreator(GOGO);
+$pdf->SetCreator('GOGO');
 $pdf->SetAuthor('Diego Yalico');
 $pdf->SetTitle('Reporte de Movimiento');
 
@@ -183,4 +190,16 @@ $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
 
 // ASIGNAR SALTO DE PAGINA AUTOMÁTICO
 $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+// set default monospaced font
+$pdf->SetFont('helvetica', 'B', 12);
+
+// AGREGAR UNA PAGINA
+$pdf->AddPage();
+// output the HTML content
+$pdf->writeHTML($contenido_pdf);
+
+ob_clean();
+//Close and output PDF document
+$pdf->Output('example_006.pdf', 'I');
     }

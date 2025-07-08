@@ -222,7 +222,8 @@ if ($tipo == "buscar_movimiento_id") {
         foreach ($arrDetalle as $bien) {
             $id_bien = $bien->id_bien;
             $resBien = $objBien->buscarBienById($id_bien);
-            $arrayBienes[] = array_merge((array)$bien,(array)$resBien);
+
+            array_push($arrayBienes, $resBien);
         }
 
         $arrRespuesta['movimiento'] = $arrMovimiento;
@@ -230,8 +231,7 @@ if ($tipo == "buscar_movimiento_id") {
         $arrRespuesta['amb_destino'] = $arrAmbDestino;
         $arrRespuesta['datos_usuario'] = $arrUsuario;
         $arrRespuesta['datos_ies'] = $arrIes;
-        $arrRespuesta['detalle'] = $arrDetalle;
-        $arrRespuesta['bien'] = $arrayBienes;
+        $arrRespuesta['detalle'] = $arrayBienes;
         $arrRespuesta['status'] = true;
         $arrRespuesta['msg'] = 'correcto';
 

@@ -55,10 +55,9 @@
         
         <div class="card">
             <div class="card-body">
-                <a href="<?php echo BASE_URL; ?>imprimir-movimientos-todos" class="btn btn-success waves-effect waves-light">
-    <i class="fa fa-print"></i> Imprimir Todos
-</a>
-
+               
+   <a href="<?php BASE_URL ?>imprimir-movimientos-todos" class="btn btn-danger"><i class="fa fa-print"></i></a>
+                
                 <h4 class="card-title">Resultados de Búsqueda</h4>
                 <div id="filtros_tabla_header" class="form-group  row page-title-box d-flex align-items-center justify-content-between m-0 mb-1 p-0">
                     <input type="hidden" id="pagina" value="1">

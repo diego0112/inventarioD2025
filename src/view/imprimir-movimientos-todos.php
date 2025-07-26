@@ -57,7 +57,7 @@ $pdf->SetMargins(10, 40, 10);
 $pdf->SetHeaderMargin(5);
 $pdf->SetAutoPageBreak(true, 15);
 $pdf->SetFont('helvetica', '', 9);
-$pdf->AddPage();
+$pdf->AddPage('L'); // 'L' para orientación horizontal (Landscape)
 
 // TÍTULO Y FECHA
 $html = "<h2 style='text-align:center;'>REPORTE GENERAL DE MOVIMIENTOS DE BIENES</h2>";
@@ -105,16 +105,16 @@ $contador = 1;
 foreach ($data->data as $mov) {
     foreach ($mov->detalle as $bien) {
         $html .= '<tr>';
-        $html .= '<td>' . $contador . '</td>';
-        $html .= '<td>' . $mov->movimiento->fecha_registro . '</td>';
-        $html .= '<td>' . $mov->origen->codigo . ' - ' . $mov->origen->detalle . '</td>';
-        $html .= '<td>' . $mov->destino->codigo . ' - ' . $mov->destino->detalle . '</td>';
-        $html .= '<td>' . $mov->usuario->nombres_apellidos . '</td>';
-        $html .= '<td>' . $mov->movimiento->descripcion . '</td>';
-        $html .= '<td>' . $bien->cod_patrimonial . '</td>';
-        $html .= '<td>' . $bien->denominacion . '</td>';
-        $html .= '<td>' . $bien->marca . '</td>';
-        $html .= '<td>' . $bien->estado_conservacion . '</td>';
+        $html .= '<td width="3%">' . $contador . '</td>';
+        $html .= '<td width="11%">' . $mov->movimiento->fecha_registro . '</td>';
+        $html .= '<td width="13%">' . $mov->origen->codigo . ' - ' . $mov->origen->detalle . '</td>';
+        $html .= '<td width="13%">' . $mov->destino->codigo . ' - ' . $mov->destino->detalle . '</td>';
+        $html .= '<td width="11%">' . $mov->usuario->nombres_apellidos . '</td>';
+        $html .= '<td width="14%">' . $mov->movimiento->descripcion . '</td>';
+        $html .= '<td width="10%">' . $bien->cod_patrimonial . '</td>';
+        $html .= '<td width="15%">' . $bien->denominacion . '</td>';
+        $html .= '<td width="5%">' . $bien->marca . '</td>';
+        $html .= '<td width="5%">' . $bien->estado_conservacion . '</td>';
         $html .= '</tr>';
         $contador++;
     }

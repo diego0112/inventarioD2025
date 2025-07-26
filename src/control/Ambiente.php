@@ -164,3 +164,48 @@ if ($tipo == "datos_registro") {
     }
     echo json_encode($arr_Respuesta);
 }
+//variables de sesion - manejar tanto GET como POST
+$id_sesion = isset($_POST['sesion']) ? $_POST['sesion'] : (isset($_GET['sesion']) ? $_GET['sesion'] : '');
+$token = isset($_POST['token']) ? $_POST['token'] : (isset($_GET['token']) ? $_GET['token'] : '');
+
+// ... resto del código existente ...
+
+// Agregar esta función al final del archivo, antes del cierre
+if ($tipo == "listar_todos_ambientes") {
+    $arr_Respuesta = array('status' => false, 'msg' => 'Error_Sesion');
+    if ($objSesion->verificar_sesion_si_activa($id_sesion, $token)) {
+        // Respuesta
+        $arr_Respuesta = array('status' => false, 'data' => '');
+        $arr_Ambiente = $objAmbiente->listarTodosLosAmbientes();
+        $arr_contenido = [];
+        
+        if (!empty($arr_Ambiente)) {
+            // Obtener instituciones para hacer el JOIN manual
+            $arr_Instituciones = $objInstitucion->buscarInstitucionOrdenado();
+            
+            // Crear un array asociativo de instituciones para búsqueda rápida
+            $instituciones_map = [];
+            foreach ($arr_Instituciones as $institucion) {
+                $instituciones_map[$institucion->id] = $institucion->nombre;
+            }
+            
+            // Recorrer ambientes y agregar nombre de institución
+            for ($i = 0; $i < count($arr_Ambiente); $i++) {
+                $arr_contenido[$i] = (object) [];
+                $arr_contenido[$i]->id = $arr_Ambiente[$i]->id;
+                $arr_contenido[$i]->id_ies = $arr_Ambiente[$i]->id_ies;
+                $arr_contenido[$i]->institucion_nombre = isset($instituciones_map[$arr_Ambiente[$i]->id_ies]) 
+                    ? $instituciones_map[$arr_Ambiente[$i]->id_ies] 
+                    : 'Sin institución';
+                $arr_contenido[$i]->encargado = $arr_Ambiente[$i]->encargado;
+                $arr_contenido[$i]->codigo = $arr_Ambiente[$i]->codigo;
+                $arr_contenido[$i]->detalle = $arr_Ambiente[$i]->detalle;
+                $arr_contenido[$i]->otros_detalle = $arr_Ambiente[$i]->otros_detalle;
+            }
+            
+            $arr_Respuesta['status'] = true;
+            $arr_Respuesta['data'] = $arr_contenido;
+        }
+    }
+    echo json_encode($arr_Respuesta);
+}

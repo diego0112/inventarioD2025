@@ -1,125 +1,125 @@
 <?php
-session_start();
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
 require_once('../model/admin-sesionModel.php');
 require_once('../model/admin-institucionModel.php');
 require_once('../model/admin-usuarioModel.php');
 require_once('../model/adminModel.php');
-$tipo = $_GET['tipo'];
 
-//instanciar la clase categoria model
+$tipo = $_GET['tipo'] ?? '';
+
+// Instanciar clases
 $objSesion = new SessionModel();
 $objInstitucion = new InstitucionModel();
 $objUsuario = new UsuarioModel();
 
-//variables de sesion
-$id_sesion = $_POST['sesion'];
-$token = $_POST['token'];
+// Obtener variables de sesión (GET o POST según el caso)
+$id_sesion = $_POST['sesion'] ?? $_GET['sesion'] ?? '';
+$token = $_POST['token'] ?? $_GET['token'] ?? '';
+
 if ($tipo == "listar") {
-    $arr_Respuesta = array('status' => false, 'msg' => 'Error_Sesion');
+    $arr_Respuesta = ['status' => false, 'msg' => 'Error_Sesion'];
     if ($objSesion->verificar_sesion_si_activa($id_sesion, $token)) {
-        //print_r($_POST);
-        //repuesta
-        $arr_Respuesta = array('status' => false, 'contenido' => '');
+        $arr_Respuesta = ['status' => false, 'contenido' => ''];
         $arr_Institucion = $objInstitucion->buscarInstitucionOrdenado();
         $arr_contenido = [];
-        if (!empty($arr_Institucion)) {
-            // recorremos el array para agregar las opciones de las categorias
-            for ($i = 0; $i < count($arr_Institucion); $i++) {
-                // definimos el elemento como objeto
-                $arr_contenido[$i] = (object) [];
-                // agregamos solo la informacion que se desea enviar a la vista
-                $arr_contenido[$i]->id = $arr_Institucion[$i]->id;
-                $arr_contenido[$i]->nombre = $arr_Institucion[$i]->nombre;
-            }
+        foreach ($arr_Institucion as $institucion) {
+            $item = (object)[
+                'id' => $institucion->id,
+                'nombre' => $institucion->nombre
+            ];
+            $arr_contenido[] = $item;
+        }
+        if (!empty($arr_contenido)) {
             $arr_Respuesta['status'] = true;
             $arr_Respuesta['contenido'] = $arr_contenido;
         }
     }
     echo json_encode($arr_Respuesta);
 }
+
 if ($tipo == "listar_instituciones") {
-    $arr_Respuesta = array('status' => false, 'msg' => 'Error_Sesion');
+    $arr_Respuesta = ['status' => false, 'msg' => 'Error_Sesion'];
     if ($objSesion->verificar_sesion_si_activa($id_sesion, $token)) {
-        //print_r($_POST);
         $pagina = $_POST['pagina'];
         $cantidad_mostrar = $_POST['cantidad_mostrar'];
-        $busqueda_tabla_codigo = $_POST['busqueda_tabla_codigo'];
-        $busqueda_tabla_ruc = $_POST['busqueda_tabla_ruc'];
-        $busqueda_tabla_insti = $_POST['busqueda_tabla_insti'];
-        //repuesta
-        $arr_Respuesta = array('status' => false, 'contenido' => '');
-        $busqueda_filtro = $objInstitucion->buscarInstitucionOrderByApellidosNombres_tabla_filtro($busqueda_tabla_codigo, $busqueda_tabla_ruc, $busqueda_tabla_insti);
-        $arr_Institucion = $objInstitucion->buscarInstitucionOrderByApellidosNombres_tabla($pagina, $cantidad_mostrar, $busqueda_tabla_codigo, $busqueda_tabla_ruc, $busqueda_tabla_insti);
-        
+        $codigo = $_POST['busqueda_tabla_codigo'];
+        $ruc = $_POST['busqueda_tabla_ruc'];
+        $insti = $_POST['busqueda_tabla_insti'];
+
+        $arr_Respuesta = ['status' => false, 'contenido' => ''];
+        $busqueda_filtro = $objInstitucion->buscarInstitucionOrderByApellidosNombres_tabla_filtro($codigo, $ruc, $insti);
+        $arr_Institucion = $objInstitucion->buscarInstitucionOrderByApellidosNombres_tabla($pagina, $cantidad_mostrar, $codigo, $ruc, $insti);
+
         $arr_contenido = [];
-        if (!empty($arr_Institucion)) {
-            // recorremos el array para agregar las opciones de las categorias
-            for ($i = 0; $i < count($arr_Institucion); $i++) {
-                // definimos el elemento como objeto
-                $arr_contenido[$i] = (object) [];
-                // agregamos solo la informacion que se desea enviar a la vista
-                $arr_contenido[$i]->id = $arr_Institucion[$i]->id;
-                $arr_contenido[$i]->beneficiario = $arr_Institucion[$i]->beneficiario;
-                $arr_contenido[$i]->cod_modular = $arr_Institucion[$i]->cod_modular;
-                $arr_contenido[$i]->ruc = $arr_Institucion[$i]->ruc;
-                $arr_contenido[$i]->nombre = $arr_Institucion[$i]->nombre;
-                $opciones = '<button type="button" title="Editar" class="btn btn-primary waves-effect waves-light" data-toggle="modal" data-target=".modal_editar' . $arr_Institucion[$i]->id . '"><i class="fa fa-edit"></i></button>';
-                $arr_contenido[$i]->options = $opciones;
-            }
+        foreach ($arr_Institucion as $inst) {
+            $item = (object)[
+                'id' => $inst->id,
+                'beneficiario' => $inst->beneficiario,
+                'cod_modular' => $inst->cod_modular,
+                'ruc' => $inst->ruc,
+                'nombre' => $inst->nombre,
+                'options' => '
+                    <button type="button" title="Editar" class="btn btn-primary waves-effect waves-light" data-toggle="modal" data-target=".modal_editar' . $inst->id . '">
+                        <i class="fa fa-edit"></i>
+                    </button>
+'
+            ];
+            $arr_contenido[] = $item;
+        }
+
+        if (!empty($arr_contenido)) {
             $arr_Respuesta['total'] = count($busqueda_filtro);
             $arr_Respuesta['status'] = true;
             $arr_Respuesta['contenido'] = $arr_contenido;
         }
+
+        // usuarios
         $arr_Usuario = $objUsuario->buscarUsuariosOrdenados();
-        $arr_contenido_usuarios = [];
-        if (!empty($arr_Usuario)) {
-            for ($i = 0; $i < count($arr_Usuario); $i++) {
-                // definimos el elemento como objeto
-                $arr_contenido_usuarios[$i] = (object) [];
-                // agregamos solo la informacion que se desea enviar a la vista
-                $arr_contenido_usuarios[$i]->id = $arr_Usuario[$i]->id;
-                $arr_contenido_usuarios[$i]->nombre = $arr_Usuario[$i]->nombres_apellidos;
-            }
-            $arr_Respuesta['usuarios'] = $arr_contenido_usuarios;
+        $arr_usuarios = [];
+        foreach ($arr_Usuario as $usuario) {
+            $arr_usuarios[] = (object)[
+                'id' => $usuario->id,
+                'nombre' => $usuario->nombres_apellidos
+            ];
         }
+        $arr_Respuesta['usuarios'] = $arr_usuarios;
     }
     echo json_encode($arr_Respuesta);
 }
+
 if ($tipo == "registrar") {
-    $arr_Respuesta = array('status' => false, 'msg' => 'Error_Sesion');
+    $arr_Respuesta = ['status' => false, 'msg' => 'Error_Sesion'];
     if ($objSesion->verificar_sesion_si_activa($id_sesion, $token)) {
-        //print_r($_POST);
-        //repuesta
         if ($_POST) {
             $beneficiario = $_POST['beneficiario'];
             $cod_modular = $_POST['cod_modular'];
             $ruc = $_POST['ruc'];
             $nombre = $_POST['nombre'];
-            if ($cod_modular == "" || $ruc == "" || $nombre == "" || $beneficiario == "") {
-                //repuesta
-                $arr_Respuesta = array('status' => false, 'mensaje' => 'Error, campos vacíos');
+
+            if ($cod_modular === "" || $ruc === "" || $nombre === "" || $beneficiario === "") {
+                $arr_Respuesta = ['status' => false, 'mensaje' => 'Error, campos vacíos'];
             } else {
-                $arr_Institucion = $objInstitucion->buscarInstitucionByCodigo($ruc);
-                if ($arr_Institucion) {
-                    $arr_Respuesta = array('status' => false, 'mensaje' => 'Registro Fallido, Institución ya se encuentra registrado');
+                $existe = $objInstitucion->buscarInstitucionByCodigo($ruc);
+                if ($existe) {
+                    $arr_Respuesta = ['status' => false, 'mensaje' => 'Registro Fallido, ya existe'];
                 } else {
-                    $id_institucion = $objInstitucion->registrarInstitucion($beneficiario,$cod_modular, $ruc, $nombre);
-                    if ($id_institucion > 0) {
-                        $arr_Respuesta = array('status' => true, 'mensaje' => 'Registro Exitoso');
-                    } else {
-                        $arr_Respuesta = array('status' => false, 'mensaje' => 'Error al registrar Institución');
-                    }
+                    $id = $objInstitucion->registrarInstitucion($beneficiario, $cod_modular, $ruc, $nombre);
+                    $arr_Respuesta = $id > 0
+                        ? ['status' => true, 'mensaje' => 'Registro Exitoso']
+                        : ['status' => false, 'mensaje' => 'Error al registrar'];
                 }
             }
         }
     }
     echo json_encode($arr_Respuesta);
 }
+
 if ($tipo == "actualizar") {
-    $arr_Respuesta = array('status' => false, 'msg' => 'Error_Sesion');
+    $arr_Respuesta = ['status' => false, 'msg' => 'Error_Sesion'];
     if ($objSesion->verificar_sesion_si_activa($id_sesion, $token)) {
-        //print_r($_POST);
-        //repuesta
         if ($_POST) {
             $id = $_POST['data'];
             $beneficiario = $_POST['beneficiario'];
@@ -127,53 +127,71 @@ if ($tipo == "actualizar") {
             $ruc = $_POST['ruc'];
             $nombre = $_POST['nombre'];
 
-            if ($id == "" || $cod_modular == "" || $ruc == "" || $nombre == "" || $beneficiario == "") {
-                //repuesta
-                $arr_Respuesta = array('status' => false, 'mensaje' => 'Error, campos vacíos');
+            if ($id === "" || $cod_modular === "" || $ruc === "" || $nombre === "" || $beneficiario === "") {
+                $arr_Respuesta = ['status' => false, 'mensaje' => 'Error, campos vacíos'];
             } else {
-                $arr_Institucion = $objInstitucion->buscarInstitucionByCodigo($cod_modular);
-                if ($arr_Institucion) {
-                    if ($arr_Institucion->id == $id) {
-                        $consulta = $objInstitucion->actualizarInstitucion($id, $beneficiario, $cod_modular, $ruc, $nombre);
-                        if ($consulta) {
-                            $arr_Respuesta = array('status' => true, 'mensaje' => 'Actualizado Correctamente');
-                        } else {
-                            $arr_Respuesta = array('status' => false, 'mensaje' => 'Error al actualizar registro');
-                        }
-                    } else {
-                        $arr_Respuesta = array('status' => false, 'mensaje' => 'código modular ya esta registrado');
-                    }
+                $existe = $objInstitucion->buscarInstitucionByCodigo($cod_modular);
+                if ($existe && $existe->id != $id) {
+                    $arr_Respuesta = ['status' => false, 'mensaje' => 'Código modular ya está registrado'];
                 } else {
-                    $consulta = $objInstitucion->actualizarInstitucion($id,$beneficiario, $cod_modular, $ruc, $nombre);
-                    if ($consulta) {
-                        $arr_Respuesta = array('status' => true, 'mensaje' => 'Actualizado Correctamente');
-                    } else {
-                        $arr_Respuesta = array('status' => false, 'mensaje' => 'Error al actualizar registro');
-                    }
+                    $ok = $objInstitucion->actualizarInstitucion($id, $beneficiario, $cod_modular, $ruc, $nombre);
+                    $arr_Respuesta = $ok
+                        ? ['status' => true, 'mensaje' => 'Actualizado Correctamente']
+                        : ['status' => false, 'mensaje' => 'Error al actualizar'];
                 }
             }
         }
     }
     echo json_encode($arr_Respuesta);
 }
+
 if ($tipo == "datos_registro") {
-    $arr_Respuesta = array('status' => false, 'msg' => 'Error_Sesion');
+    $arr_Respuesta = ['status' => false, 'msg' => 'Error_Sesion'];
     if ($objSesion->verificar_sesion_si_activa($id_sesion, $token)) {
-        //repuesta
         $arr_Usuario = $objUsuario->buscarUsuariosOrdenados();
-        $arr_contenido = [];
-        if (!empty($arr_Usuario)) {
-            for ($i = 0; $i < count($arr_Usuario); $i++) {
-                // definimos el elemento como objeto
-                $arr_contenido[$i] = (object) [];
-                // agregamos solo la informacion que se desea enviar a la vista
-                $arr_contenido[$i]->id = $arr_Usuario[$i]->id;
-                $arr_contenido[$i]->nombre = $arr_Usuario[$i]->nombres_apellidos;
-            }
-            $arr_Respuesta['status'] = true;
-            $arr_Respuesta['contenido'] = $arr_contenido;
+        $contenido = [];
+        foreach ($arr_Usuario as $usuario) {
+            $contenido[] = (object)[
+                'id' => $usuario->id,
+                'nombre' => $usuario->nombres_apellidos
+            ];
         }
-        $arr_Respuesta['msg'] = "Datos encontrados";
+        $arr_Respuesta = ['status' => true, 'contenido' => $contenido, 'msg' => 'Datos encontrados'];
+    }
+    echo json_encode($arr_Respuesta);
+}
+
+if ($tipo == "buscar_institucion_id") {
+    $arr_Respuesta = ['status' => false, 'msg' => 'Error_Sesion'];
+    if ($objSesion->verificar_sesion_si_activa($id_sesion, $token)) {
+        $id_institucion = $_GET['data'] ?? '';
+        $info_institucion = $objInstitucion->buscarInstitucionById($id_institucion);
+        if ($info_institucion) {
+            $arr_Respuesta = [
+                'status' => true,
+                'institucion' => $info_institucion
+            ];
+        } else {
+            $arr_Respuesta['msg'] = 'Institución no encontrada';
+        }
+    }
+    echo json_encode($arr_Respuesta);
+    exit;
+}
+// Agregar este bloque al final del controlador, antes del cierre del archivo
+
+if ($tipo == "listar_todas_instituciones") {
+    $arr_Respuesta = ['status' => false, 'msg' => 'Error_Sesion'];
+    if ($objSesion->verificar_sesion_si_activa($id_sesion, $token)) {
+        $arr_Respuesta = ['status' => false, 'data' => []];
+        $arr_Instituciones = $objInstitucion->listarTodasInstituciones();
+        
+        if (!empty($arr_Instituciones)) {
+            $arr_Respuesta['status'] = true;
+            $arr_Respuesta['data'] = $arr_Instituciones;
+        } else {
+            $arr_Respuesta['msg'] = 'No se encontraron instituciones';
+        }
     }
     echo json_encode($arr_Respuesta);
 }

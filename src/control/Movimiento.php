@@ -238,3 +238,37 @@ if ($tipo == "buscar_movimiento_id") {
     }
     echo json_encode($arrRespuesta);
 }
+if ($tipo == "listar_todos_movimientos") {
+    $arr_Respuesta = array('status' => false, 'msg' => 'Error_Sesion');
+    if ($objSesion->verificar_sesion_si_activa($id_sesion, $token)) {
+        $id_ies = $_GET['ies'];
+        $arrMovimientos = $objMovimiento->buscarMovimiento_tabla_filtro("", "", "", "", $id_ies);
+        $dataFinal = [];
+
+        foreach ($arrMovimientos as $mov) {
+            $origen = $objAmbiente->buscarAmbienteById($mov->id_ambiente_origen);
+            $destino = $objAmbiente->buscarAmbienteById($mov->id_ambiente_destino);
+            $usuario = $objUsuario->buscarUsuarioById($mov->id_usuario_registro);
+            $detalle = $objMovimiento->buscarDetalle_MovimientoByMovimiento($mov->id);
+
+            $bienes = [];
+            foreach ($detalle as $item) {
+                $bien = $objBien->buscarBienById($item->id_bien);
+                $bienes[] = $bien;
+            }
+
+            $dataFinal[] = [
+                'movimiento' => $mov,
+                'origen' => $origen,
+                'destino' => $destino,
+                'usuario' => $usuario,
+                'detalle' => $bienes
+            ];
+        }
+
+        $arr_Respuesta['status'] = true;
+        $arr_Respuesta['data'] = $dataFinal;
+    }
+
+    echo json_encode($arr_Respuesta);
+}

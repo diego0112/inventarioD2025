@@ -115,8 +115,17 @@ if ($tipo == "listar_usuarios_ordenados_tabla") {
                 $arr_contenido[$i]->correo = $arr_Usuario[$i]->correo;
                 $arr_contenido[$i]->telefono = $arr_Usuario[$i]->telefono;
                 $arr_contenido[$i]->estado = $arr_Usuario[$i]->estado;
-                $opciones = '<button type="button" title="Editar" class="btn btn-primary waves-effect waves-light" data-toggle="modal" data-target=".modal_editar' . $arr_Usuario[$i]->id . '"><i class="fa fa-edit"></i></button>
-                                <button class="btn btn-info" title="Resetear Contraseña" onclick="reset_password(' . $arr_Usuario[$i]->id . ')"><i class="fa fa-key"></i></button>';
+                $opciones = '
+    <button type="button" title="Editar" class="btn btn-primary waves-effect waves-light" data-toggle="modal" data-target=".modal_editar' . $arr_Usuario[$i]->id . '">
+        <i class="fa fa-edit"></i>
+    </button>
+    <button class="btn btn-info" title="Resetear Contraseña" onclick="reset_password(' . $arr_Usuario[$i]->id . ')">
+        <i class="fa fa-key"></i>
+    </button>
+    <a href="'.BASE_URL.'imprimir-usuario/' . $arr_Usuario[$i]->id . '" class="btn btn-warning" title="Imprimir Usuario">
+        <i class="fa fa-print"></i>
+    </a>';
+
                 $arr_contenido[$i]->options = $opciones;
             }
             $arr_Respuesta['total'] = count($busqueda_filtro);
@@ -408,4 +417,50 @@ try {
 
 }
 
+if ($tipo == "buscar_usuario_id") {
+    $arr_Respuesta = array('status' => false, 'msg' => 'Error_Sesion');
+    if ($objSesion->verificar_sesion_si_activa($_GET['sesion'], $_GET['token'])) {
+        $id_usuario = $_GET['data'];
+        $usuario = $objUsuario->buscarUsuarioById($id_usuario);
+        if ($usuario) {
+            $arr_Respuesta = array('status' => true, 'usuario' => $usuario);
+        }
+    }
+    echo json_encode($arr_Respuesta);
+}
+
+
+// Agregar esta función al final del archivo Usuario.php, antes del cierre
+
+if ($tipo == "listar_todos_usuarios") {
+    $arr_Respuesta = array('status' => false, 'msg' => 'Error_Sesion');
+    
+    // Manejar parámetros de sesión tanto por GET como por POST
+    $id_sesion_param = isset($_GET['sesion']) ? $_GET['sesion'] : $id_sesion;
+    $token_param = isset($_GET['token']) ? $_GET['token'] : $token;
+    
+    if ($objSesion->verificar_sesion_si_activa($id_sesion_param, $token_param)) {
+        // Respuesta
+        $arr_Respuesta = array('status' => false, 'data' => '');
+        $arr_Usuario = $objUsuario->listarTodosLosUsuarios();
+        $arr_contenido = [];
+        
+        if (!empty($arr_Usuario)) {
+            // Recorrer usuarios y preparar datos para el PDF
+            for ($i = 0; $i < count($arr_Usuario); $i++) {
+                $arr_contenido[$i] = (object) [];
+                $arr_contenido[$i]->id = $arr_Usuario[$i]->id;
+                $arr_contenido[$i]->dni = $arr_Usuario[$i]->dni;
+                $arr_contenido[$i]->nombres_apellidos = $arr_Usuario[$i]->nombres_apellidos;
+                $arr_contenido[$i]->correo = $arr_Usuario[$i]->correo;
+                $arr_contenido[$i]->telefono = $arr_Usuario[$i]->telefono;
+                $arr_contenido[$i]->estado = $arr_Usuario[$i]->estado;
+            }
+            
+            $arr_Respuesta['status'] = true;
+            $arr_Respuesta['data'] = $arr_contenido;
+        }
+    }
+    echo json_encode($arr_Respuesta);
+}
 

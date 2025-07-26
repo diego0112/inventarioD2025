@@ -91,4 +91,42 @@ class BienModel
         }
         return $arrRespuesta;
     }
+// Agregar esta función al archivo BienModel.php existente
+
+public function listar_todos_bienes($ies)
+{
+    $arrRespuesta = array();
+    $sql = $this->conexion->query("
+        SELECT 
+            bienes.id,
+            bienes.id_ambiente,
+            bienes.cod_patrimonial,
+            bienes.denominacion,
+            bienes.marca,
+            bienes.modelo,
+            bienes.tipo,
+            bienes.color,
+            bienes.serie,
+            bienes.dimensiones,
+            bienes.valor,
+            bienes.situacion,
+            bienes.estado_conservacion,
+            bienes.observaciones,
+            bienes.fecha_registro,
+            ambientes_institucion.codigo as ambiente_codigo,
+            ambientes_institucion.detalle as ambiente_detalle,
+            usuarios.nombres_apellidos as usuario_nombre
+        FROM bienes 
+        INNER JOIN ambientes_institucion ON bienes.id_ambiente = ambientes_institucion.id 
+        INNER JOIN usuarios ON bienes.usuario_registro = usuarios.id
+        WHERE ambientes_institucion.id_ies = '$ies' AND bienes.estado = 1
+        ORDER BY bienes.denominacion ASC
+    ");
+    
+    while ($objeto = $sql->fetch_object()) {
+        array_push($arrRespuesta, $objeto);
+    }
+    return $arrRespuesta;
+}
+
 }

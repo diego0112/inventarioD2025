@@ -79,4 +79,16 @@ class AmbienteModel
         }
         return $arrRespuesta;
     }
+// Agregar este método a la clase AmbienteModel
+
+public function listarTodosLosAmbientes()
+{
+    $arrRespuesta = array();
+    $sql = $this->conexion->query("SELECT * FROM ambientes_institucion ORDER BY detalle ASC");
+    while ($objeto = $sql->fetch_object()) {
+        array_push($arrRespuesta, $objeto);
+    }
+    return $arrRespuesta;
+}
+
 }
